@@ -12,6 +12,7 @@ And some drawing code to get you going.
 
 kne
 """
+import time
 from threading import Thread
 from random import uniform
 import pygame
@@ -82,11 +83,18 @@ while running:
     screen.fill((0, 0, 0, 0))
     # Draw the world
     
+    time1 = time.time()
+    
     for person in population:
         backwardOrForward = uniform(-1,1)
         rightOrLeft = uniform(-1,1)
-        t = Thread(target=myfunc, args=(person,screen, backwardOrForward, rightOrLeft))
-        t.start()
+        # t = Thread(target=myfunc, args=(person,screen, backwardOrForward, rightOrLeft))
+        # t.start()
+        person.update(screen, backwardOrForward, rightOrLeft)
+
+    
+    time2 = time.time()
+    print('{:s} function took {:.3f} ms'.format("tick", (time2-time1)*1000.0))
 
     # Flip the screen and try to keep at the target FPS
     pygame.display.flip()
