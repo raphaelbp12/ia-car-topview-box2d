@@ -1,3 +1,4 @@
+import math
 import Box2D  # The main library
 import pygame
 from Box2D.b2 import (world, polygonShape, staticBody, dynamicBody)
@@ -57,11 +58,15 @@ class World:
         # car = Car(world, 15, 15, 15)
         self.car = TDCar(self.world)
 
+        self.carLastPosition = self.car.body.worldCenter
+
         
         self.totalRunnedDistance = 0
         self.numberContactWall = 0
         self.ticksOnCrashToWall = []
         self.ticksOnGetObjective = []
+        self.gameover = False
+        self.lastTotalDistance = 0
 
         self.laserPoints = []
         self.laserImpactPoints = []
@@ -74,6 +79,63 @@ class World:
             dynamicBody: (127, 127, 127, 255),
         }
 
+
+    def calcGameOver(self):
+
+        maxSeconds = 5
+
+        if (len(self.goals) == 0):
+            self.gameover = True
+        if (len(self.ticksOnCrashToWall) > 0):
+            self.gameover = True
+        if (self.totalRunnedDistance < 0.6 and self.ticks > 60*maxSeconds):
+            self.gameover = True
+
+        if(self.ticks > 3000):
+            self.gameover = True
+            
+        index = self.ticks / 60
+        if (index > 1):
+            if (self.totalRunnedDistance - self.lastTotalDistance < 0.01 and self.ticks > 60*maxSeconds):
+                self.gameover = True
+
+            if (self.totalRunnedDistance*1.0/self.ticks != 0 and self.totalRunnedDistance*1.0/self.ticks < 0.002 and self.ticks > 60*maxSeconds):
+                self.gameover = True
+
+            # print('vel media', self.totalRunnedDistance/self.ticks)
+    
+
+    def registerCarPositions(self):
+        if  (self.ticks % 60 == 0):
+            # print('self.carLastPosition', self.carLastPosition)
+            self.calcTotalDistance()
+            self.carLastPosition = b2Vec2(self.car.body.worldCenter.x, self.car.body.worldCenter.y)
+
+    def calcTotalDistance(self):
+        self.lastTotalDistance = self.totalRunnedDistance
+        
+        runnedDistance = math.sqrt(math.pow((self.carLastPosition.x - self.car.body.worldCenter.x), 2) + math.pow((self.carLastPosition.y - self.car.body.worldCenter.y), 2))
+        # print('runnedDistance', runnedDistance, 'ticks', self.ticks, self.carLastPosition, self.car.body.worldCenter)
+        self.totalRunnedDistance = self.totalRunnedDistance + runnedDistance
+
+        print('totalDistance', self.totalRunnedDistance, self.ticks)
+        return self.totalRunnedDistance
+
+    def verifyContactToWall(self, contact):
+        contacted = self.verifyContact(contact, 'car', 'wall')
+        if (not contacted):
+            contacted = self.verifyContact(contact, 'wheel', 'wall')
+
+        if(contacted):
+            if(self.ticksOnCrashToWall and len(self.ticksOnCrashToWall) > 0):
+                length = len(self.ticksOnCrashToWall)
+                if ((self.ticks - self.ticksOnCrashToWall[length - 1]) > 30):
+                    self.ticksOnCrashToWall.append(self.ticks)
+            else:
+                self.ticksOnCrashToWall = [self.ticks]
+
+            print('crashed to wall', self.ticksOnCrashToWall)
+            
     def verifyContactToGoal(self, contact):
         contacted = self.verifyContact(contact, 'car', 'goal')
         if (not contacted):
@@ -108,18 +170,23 @@ class World:
         return False
 
     def update(self, screen, backwardOrForward, rightOrLeft):
-        self.ticks = self.ticks + 1
-        if self.contactListener.hasContact:
-            contact = self.contactListener.getBeginContact()
-            self.verifyContactToGoal(contact)
-        self.backwardOrForward = backwardOrForward
-        self.rightOrLeft = rightOrLeft
+        if(not self.gameover):
+            self.ticks = self.ticks + 1
+            if self.contactListener.hasContact:
+                contact = self.contactListener.getBeginContact()
+                self.verifyContactToGoal(contact)
+                self.verifyContactToWall(contact)
+            self.backwardOrForward = backwardOrForward
+            self.rightOrLeft = rightOrLeft
 
-        self.draw(screen)
-        self.car.update(backwardOrForward, rightOrLeft)
-        self.laserPoints = self.car.sensors.laserPoints
-        self.laserImpactPoints = self.car.sensors.laserImpactPoints
-        self.world.Step(self.TIME_STEP, 10, 10)
+            self.draw(screen)
+            self.car.update(backwardOrForward, rightOrLeft)
+            self.laserPoints = self.car.sensors.laserPoints
+            self.laserImpactPoints = self.car.sensors.laserImpactPoints
+            self.world.Step(self.TIME_STEP, 10, 10)
+
+            self.registerCarPositions()
+            self.calcGameOver()
 
 
     def draw(self, screen):
@@ -155,14 +222,14 @@ class World:
 
                 pygame.draw.polygon(screen, color, vertices)
 
-        for point in self.laserPoints:
-            color = (0, 255, 0, 255)
-            carPosScaled = b2Vec2(self.car.body.worldCenter.x * self.worldDrawScale, self.car.body.worldCenter.y * self.worldDrawScale)
-            pointScaled = b2Vec2(point.x * self.worldDrawScale, point.y * self.worldDrawScale)
-            pygame.draw.line(screen, color, carPosScaled, pointScaled)
+        # for point in self.laserPoints:
+        #     color = (0, 255, 0, 255)
+        #     carPosScaled = b2Vec2(self.car.body.worldCenter.x * self.worldDrawScale, self.car.body.worldCenter.y * self.worldDrawScale)
+        #     pointScaled = b2Vec2(point.x * self.worldDrawScale, point.y * self.worldDrawScale)
+        #     pygame.draw.line(screen, color, carPosScaled, pointScaled)
 
-        for point in self.laserImpactPoints:
-            color = (0, 255, 0, 255)
-            pointScaled = b2Vec2(point.x * self.worldDrawScale, point.y * self.worldDrawScale)
-            # print("laserImpactPoints point", point, pointScaled)
-            pygame.draw.circle(screen, color, (int(pointScaled.x), int(pointScaled.y)), 2, 0)
+        # for point in self.laserImpactPoints:
+        #     color = (0, 255, 0, 255)
+        #     pointScaled = b2Vec2(point.x * self.worldDrawScale, point.y * self.worldDrawScale)
+        #     # print("laserImpactPoints point", point, pointScaled)
+        #     pygame.draw.circle(screen, color, (int(pointScaled.x), int(pointScaled.y)), 2, 0)

@@ -12,6 +12,8 @@ And some drawing code to get you going.
 
 kne
 """
+from threading import Thread
+from random import uniform
 import pygame
 from pygame.locals import (QUIT, KEYDOWN, KEYUP, K_ESCAPE)
 
@@ -34,10 +36,19 @@ clock = pygame.time.Clock()
 
 # --- pybox2d world setup ---
 # Create the world
-world = World(PPM, TIME_STEP)
+
+numPopulation = 3000
+population = []
+
+for i in range(numPopulation):
+    population.append(World(PPM, TIME_STEP))
 
 rightOrLeft = 0
 backwardOrForward = 0
+
+
+def myfunc(world, screen, backwardOrForward, rightOrLeft):
+    world.update(screen, backwardOrForward, rightOrLeft)
 
 # --- main game loop ---
 running = True
@@ -71,7 +82,11 @@ while running:
     screen.fill((0, 0, 0, 0))
     # Draw the world
     
-    world.update(screen, backwardOrForward, rightOrLeft)
+    for person in population:
+        backwardOrForward = uniform(-1,1)
+        rightOrLeft = uniform(-1,1)
+        t = Thread(target=myfunc, args=(person,screen, backwardOrForward, rightOrLeft))
+        t.start()
 
     # Flip the screen and try to keep at the target FPS
     pygame.display.flip()
