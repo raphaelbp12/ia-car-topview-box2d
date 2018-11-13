@@ -7,6 +7,7 @@ from Box2D import (b2BodyDef, b2CircleShape, b2Color, b2EdgeShape,
 
 from top_down import (TDCar, TDTire)
 from goal import (Goal)
+from contactListener import (ContactListener)
 
 class World:
     def __init__(self, worldDrawScale, TIME_STEP):
@@ -15,9 +16,12 @@ class World:
         self.ticks = 0
         self.worldDrawScale = worldDrawScale
 
+        self.contactListener = ContactListener()
+        self.world.contactListener = self.contactListener
+
         self.TIME_STEP = TIME_STEP
 
-        self.goals = [Goal(self.world, "goal 1", 300, 300)]
+        self.goals = [Goal(self.world, "goal", 300, 300)]
 
         self.goalsBodies = []
         for goal in self.goals:

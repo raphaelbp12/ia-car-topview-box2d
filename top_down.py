@@ -26,8 +26,7 @@ class TDCar(object):
 
         self.sensors = Sensors(world)
         self.body = world.CreateDynamicBody(position=position)
-        self.fixture = self.body.CreatePolygonFixture(vertices=vertices, density=density)
-        self.body.userData = {'obj': self}
+        self.fixture = self.body.CreatePolygonFixture(vertices=vertices, density=density,userData = "car")
 
         self.tires = [TDTire(self, **tire_kws) for i in range(4)]
 
@@ -112,8 +111,7 @@ class TDTire(object):
         self.ground_areas = []
 
         self.body = world.CreateDynamicBody(position=position)
-        self.body.CreatePolygonFixture(box=dimensions, density=density)
-        self.body.userData = "wheel"
+        self.body.CreatePolygonFixture(box=dimensions, density=density, userData = "wheel")
 
     @property
     def forward_velocity(self):
