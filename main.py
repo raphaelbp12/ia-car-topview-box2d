@@ -45,7 +45,7 @@ while running:
     # Check the event queue
     for event in pygame.event.get():
         if (event.type == KEYDOWN):
-            print("key down", event.key)
+            # print("key down", event.key)
             if (event.key == 97): #left
                 rightOrLeft = 1
             if (event.key == 100): #right
@@ -55,7 +55,7 @@ while running:
             if (event.key == 115): #backward
                 backwardOrForward = -1
         if (event.type == KEYUP):
-            print("key up", event.key)
+            # print("key up", event.key)
             if (event.key == 97): #left
                 rightOrLeft = 0
             if (event.key == 100): #right

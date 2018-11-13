@@ -11,10 +11,7 @@ class ContactListener(b2ContactListener):
 
         fixA = contact.fixtureA
         fixB = contact.fixtureB
-        print("contact", fixA, fixB)
-        if ((fixA.userData == 'car' and  fixB.userData == 'goal') or (fixA.userData == 'goal' and  fixB.userData == 'car')):
-            print('chegou no goal', contact)
-            contact.enabled = False
+        # print("contact", fixA, fixB)
 
         pass
     def EndContact(self, contact):

@@ -56,6 +56,13 @@ class World:
 
         # car = Car(world, 15, 15, 15)
         self.car = TDCar(self.world)
+
+        
+        self.totalRunnedDistance = 0
+        self.numberContactWall = 0
+        self.ticksOnCrashToWall = []
+        self.ticksOnGetObjective = []
+
         self.laserPoints = []
         self.laserImpactPoints = []
 
@@ -67,8 +74,44 @@ class World:
             dynamicBody: (127, 127, 127, 255),
         }
 
+    def verifyContactToGoal(self, contact):
+        contacted = self.verifyContact(contact, 'car', 'goal')
+        if (not contacted):
+            contacted = self.verifyContact(contact, 'wheel', 'goal')
+
+        # print('verifyContactToGoal', contacted)
+        if(contacted):
+            remainingGoals = []
+            for goal in self.goals:
+                if(contact.fixtureA.userData == goal.fixture.userData or contact.fixtureB.userData == goal.fixture.userData):
+                    self.ticksOnGetObjective.append(self.ticks)
+                    self.world.DestroyBody(goal.body)
+                    # print("body destroyed", goal, self.contactListener.hasContact)
+                else:
+                    remainingGoals.append(goal)
+            self.goals = remainingGoals
+
+    def verifyIfIsPartOfUserData(Self, fixPartialName, fixture):
+        countChar = len(fixPartialName)
+        if (type(fixture.userData) is str and len(fixture.userData) >= countChar and fixture.userData[:countChar] == fixPartialName):
+            return True
+        else:
+            return False
+
+
+    def verifyContact(self, contact, fixExactName, fixPartialName):
+
+        # print('contact', contact)
+        # print('fixA', contact.fixtureA.userData, 'fixB', contact.fixtureB.userData)
+        if ((contact.fixtureA.userData and self.verifyIfIsPartOfUserData(fixPartialName, contact.fixtureA) and (contact.fixtureB.userData == fixExactName)) or ((contact.fixtureA.userData == fixExactName) and  contact.fixtureB.userData and self.verifyIfIsPartOfUserData(fixPartialName, contact.fixtureB))):
+            return True
+        return False
+
     def update(self, screen, backwardOrForward, rightOrLeft):
         self.ticks = self.ticks + 1
+        if self.contactListener.hasContact:
+            contact = self.contactListener.getBeginContact()
+            self.verifyContactToGoal(contact)
         self.backwardOrForward = backwardOrForward
         self.rightOrLeft = rightOrLeft
 
