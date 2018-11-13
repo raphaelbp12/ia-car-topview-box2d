@@ -77,7 +77,7 @@ class TDCar(object):
         front_left_joint, front_right_joint = self.joints[2:4]
         angle_now = front_left_joint.angle
 
-        print('desired_angle', desired_angle, 'angle_now', angle_now)
+        # print('desired_angle', desired_angle, 'angle_now', angle_now)
         angle_to_turn = desired_angle - angle_now
 
         # TODO fix b2Clamp for non-b2Vec2 types

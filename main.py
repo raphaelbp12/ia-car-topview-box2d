@@ -23,6 +23,7 @@ from Box2D import (b2BodyDef, b2CircleShape, b2Color, b2EdgeShape,
                    b2_dynamicBody, b2_pi)
 
 from top_down import (TDCar, TDTire)
+from goal import (Goal)
 
 # --- constants ---
 # Box2D deals with meters, but we want to display pixels,
@@ -40,6 +41,12 @@ clock = pygame.time.Clock()
 # --- pybox2d world setup ---
 # Create the world
 world = world(gravity=(0, 0), doSleep=True)
+
+goals = [Goal(world, "goal 1", 300, 300)]
+
+goalsBodies = []
+for goal in goals:
+    goalsBodies.append(goal.body)
 
 horizontal_ground_body_fixDef = b2FixtureDef(
                 shape=b2PolygonShape(box=(1280, 5)),
@@ -115,7 +122,7 @@ while running:
 
     screen.fill((0, 0, 0, 0))
     # Draw the world
-    for body in ([h1_ground_body, h2_ground_body, v1_ground_body, v2_ground_body] + car.getBodies()):  # or: world.bodies
+    for body in ([h1_ground_body, h2_ground_body, v1_ground_body, v2_ground_body] + car.getBodies() + goalsBodies):  # or: world.bodies
         # The body gives us the position and angle of its shapes
         for fixture in body.fixtures:
             # The fixture holds information like density and friction,
@@ -142,6 +149,8 @@ while running:
                 color = (255, 0, 0, 255)
             if (fixture.userData == "wheel rear"):
                 color = (0, 0, 255, 255)
+            if (type(fixture.userData) is str and len(fixture.userData) >= 4 and fixture.userData[:4] == "goal"):
+                color = (0, 150, 150, 255)
 
             pygame.draw.polygon(screen, color, vertices)
 
